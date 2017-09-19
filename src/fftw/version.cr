@@ -1,3 +1,3 @@
-module Fftw.cr
+module FFTW
   VERSION = "0.1.0"
 end
