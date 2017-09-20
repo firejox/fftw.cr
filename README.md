@@ -1,5 +1,7 @@
 # fftw.cr
 
+[![Build Status](https://travis-ci.org/firejox/fftw.cr.svg?branch=master)](https://travis-ci.org/firejox/fftw.cr)
+
 Crystal wrapper to the [FFTW 3](http://www.fftw.org) library
 
 ## Installation
@@ -20,11 +22,29 @@ dependencies:
 
 ## Usage
 
+You can compute abtitrary size of Fourier transform by this:
+
 ```crystal
 require "fftw.cr"
+
+x = Array.new(512) { Complex.new(Random.next_u, Random.next_u) }
+
+dft_x = FFTW.dft(x)
 ```
 
-TODO: Write usage instructions here
+Or be more efficient on fix-size of transform by this:
+
+```crystal
+require "fftw.cr"
+
+plan = FFTW::Plan.new(512)
+
+x = Array.new(512) { Complex.new(Random.next_u, Random.next_u) }
+
+dft_x = plan.dft(x)
+```
+
+For more details see the sample in [/sample](/sample) folder.
 
 ## Development
 
