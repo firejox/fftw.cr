@@ -38,7 +38,7 @@ r_arr_out.each do |x|
   puts x
 end
 
-r_arr_back = FFTW.idft_r r_arr_out
+r_arr_back = FFTW.idft_r r_arr_out, 512
 
 puts "The Inverse Transform of Discrete Fourier Transform Real Array:"
 r_arr_back.each do |x|
