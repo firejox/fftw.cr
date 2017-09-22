@@ -44,11 +44,15 @@ x = Array.new(512) { Complex.new(Random.next_u, Random.next_u) }
 dft_x = plan.dft(x)
 ```
 
-For more details see the sample in [/sample](/sample) folder.
-
 ## Development
 
-It is early stage project, the wrapper API may be unstable.
+### Roadmap
+
+- [x] Add Plan class
+- [ ] Add full transformations listed in [FFTW3 doc](http://www.fftw.org/fftw3_doc/Tutorial.html#Tutorial)
+- [ ] FFTW3 wisdom feature
+- [ ] Multithread
+- [ ] MPI support
 
 ## Contributing
 
