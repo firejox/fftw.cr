@@ -257,20 +257,11 @@ private struct DFTCompute(N)
     n = x.size
     in_arr = x.map { |elem| StaticArray[elem.real, elem.imag] }
     out_slice = Pointer(FFTW::LibFFTW::FFTWComplex).malloc(n).to_slice(n)
-    plan = nil
 
-    {% if N == 1 %}
-      plan = FFTW::LibFFTW.fftw_plan_dft_1d(dims[0], in_arr, out_slice, FFTW::LibFFTW::FFTW_FORWARD, FFTW::LibFFTW::FFTW_ESTIMATE)
-    {% elsif N == 2 %}
-      plan = FFTW::LibFFTW.fftw_plan_dft_2d(dims[0], dims[1], in_arr, out_slice, FFTW::LibFFTW::FFTW_FORWARD, FFTW::LibFFTW::FFTW_ESTIMATE)
-    {% elsif N == 3 %}
-      plan = FFTW::LibFFTW.fftw_plan_dft_3d(dims[0], dims[1], dims[2], in_arr, out_slice, FFTW::LibFFTW::FFTW_FORWARD, FFTW::LibFFTW::FFTW_ESTIMATE)
-    {% elsif N >= 4 %}
-      plan = FFTW::LibFFTW.fftw_plan_dft(N, pointerof(dims).as(Int32*), in_arr, out_slice, FFTW::LibFFTW::FFTW_FORWARD, FFTW::LibFFTW::FFTW_ESTIMATE)
-    {% end %}
+    plan = FFTW::LibFFTW.fftw_plan_dft(N, pointerof(dims).as(Int32*), in_arr, out_slice, FFTW::LibFFTW::FFTW_FORWARD, FFTW::LibFFTW::FFTW_ESTIMATE)
 
-    FFTW::LibFFTW.fftw_execute(plan.not_nil!)
-    FFTW::LibFFTW.fftw_destroy_plan(plan.not_nil!)
+    FFTW::LibFFTW.fftw_execute(plan)
+    FFTW::LibFFTW.fftw_destroy_plan(plan)
 
     out_slice.map do |elem|
       Complex.new(elem[0], elem[1])
@@ -281,20 +272,11 @@ private struct DFTCompute(N)
     n = x.size
     in_arr = x.map { |elem| StaticArray[elem.real, elem.imag] }
     out_slice = Pointer(FFTW::LibFFTW::FFTWComplex).malloc(n).to_slice(n)
-    plan = nil
 
-    {% if N == 1 %}
-      plan = FFTW::LibFFTW.fftw_plan_dft_1d(dims[0], in_arr, out_slice, FFTW::LibFFTW::FFTW_BACKWARD, FFTW::LibFFTW::FFTW_ESTIMATE)
-    {% elsif N == 2 %}
-      plan = FFTW::LibFFTW.fftw_plan_dft_2d(dims[0], dims[1], in_arr, out_slice, FFTW::LibFFTW::FFTW_BACKWARD, FFTW::LibFFTW::FFTW_ESTIMATE)
-    {% elsif N == 3 %}
-      plan = FFTW::LibFFTW.fftw_plan_dft_3d(dims[0], dims[1], dims[2], in_arr, out_slice, FFTW::LibFFTW::FFTW_BACKWARD, FFTW::LibFFTW::FFTW_ESTIMATE)
-    {% elsif N >= 4 %}
-      plan = FFTW::LibFFTW.fftw_plan_dft(N, pointerof(dims).as(Int32*), in_arr, out_slice, FFTW::LibFFTW::FFTW_BACKWARD, FFTW::LibFFTW::FFTW_ESTIMATE)
-    {% end %}
+    plan = FFTW::LibFFTW.fftw_plan_dft(N, pointerof(dims).as(Int32*), in_arr, out_slice, FFTW::LibFFTW::FFTW_BACKWARD, FFTW::LibFFTW::FFTW_ESTIMATE)
 
-    FFTW::LibFFTW.fftw_execute(plan.not_nil!)
-    FFTW::LibFFTW.fftw_destroy_plan(plan.not_nil!)
+    FFTW::LibFFTW.fftw_execute(plan)
+    FFTW::LibFFTW.fftw_destroy_plan(plan)
 
     out_slice.map do |elem|
       Complex.new(elem[0], elem[1])
