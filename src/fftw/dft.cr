@@ -10,6 +10,10 @@ module FFTW
     {{ "DFTCompute(#{T.size - 1}).idft(*args)".id }}
   end
 
+  def self.idft_r(*args : *T) forall T
+    {{ "DFTCompute(#{T.size - 1}).idft_r(*args)".id }}
+  end
+
   def self.dft(x : Array(Complex))
     DFTCompute(1).dft(x, x.size)
   end
@@ -105,106 +109,78 @@ module FFTW
   end
 
   def self.dft(x : Array(Float64))
-    sz = x.size/2 + 1
-    out_slice = Pointer(LibFFTW::FFTWComplex).malloc(sz).to_slice(sz)
-
-    plan = LibFFTW.fftw_plan_dft_r2c_1d(x.size, x, out_slice, LibFFTW::FFTW_ESTIMATE)
-    LibFFTW.fftw_execute(plan)
-    LibFFTW.fftw_destroy_plan(plan)
-
-    out_slice.map do |elem|
-      Complex.new(elem[0], elem[1])
-    end
+    DFTCompute(1).dft(x, x.size)
   end
 
   def self.idft_r(x : Array(Complex), sz : Int32)
-    in_arr = x.map { |elem| StaticArray[elem.real, elem.imag] }
-    out_slice = Slice(Float64).new(sz)
-
-    plan = LibFFTW.fftw_plan_dft_c2r_1d(sz, in_arr, out_slice, LibFFTW::FFTW_ESTIMATE)
-    LibFFTW.fftw_execute(plan)
-    LibFFTW.fftw_destroy_plan(plan)
-
-    out_slice.map do |elem|
-      elem
-    end
+    DFTCompute(1).idft_r(x, sz)
   end
 
   def self.dft(x : Array(Array(Float64)))
     n0 = x.size
     n1 = x[0].size
-    in_arr = x.flatten
-    sz = n0 * (n1/2 + 1)
-    out_slice = Pointer(LibFFTW::FFTWComplex).malloc(sz).to_slice(sz)
 
-    plan = LibFFTW.fftw_plan_dft_r2c_2d(n0, n1, in_arr, out_slice, LibFFTW::FFTW_ESTIMATE)
-    LibFFTW.fftw_execute(plan)
-    LibFFTW.fftw_destroy_plan(plan)
+    iter = DFTCompute(2).dft(x.flatten, n0, n1).each
 
-    out_slice.map do |elem|
-      Complex.new(elem[0], elem[1])
-    end.in_groups_of(n1/2 + 1)
+    Array.new(n0) do
+      Array.new((n1/2) + 1) do
+        iter.next.as(Complex)
+      end
+    end
   end
 
   def self.idft_r(x : Array(Array(Complex)), last_dim : Int32)
     n0 = x.size
-    sz = last_dim * n0
 
-    in_arr = x.flatten.map { |elem| StaticArray[elem.real, elem.imag] }
-    out_slice = Slice(Float64).new(sz)
+    iter = DFTCompute(2).idft_r(x.flatten, n0, last_dim).each
 
-    plan = LibFFTW.fftw_plan_dft_c2r_2d(n0, last_dim, in_arr, out_slice, LibFFTW::FFTW_ESTIMATE)
-    LibFFTW.fftw_execute(plan)
-    LibFFTW.fftw_destroy_plan(plan)
-
-    out_slice.map do |elem|
-      elem
-    end.in_groups_of(last_dim)
+    Array.new(n0) do
+      Array.new(last_dim) do
+        iter.next.as(Float64)
+      end
+    end
   end
 
   def self.dft(x : Array(Array(Array(Float64))))
     n0 = x.size
     n1 = x[0].size
     n2 = x[0][0].size
-    sz = n0 * n1 * (n2/2 + 1)
 
-    in_arr = x.flatten
-    out_slice = Pointer(LibFFTW::FFTWComplex).malloc(sz).to_slice(sz)
+    iter = DFTCompute(3).dft(x.flatten, n0, n1, n2).each
 
-    plan = LibFFTW.fftw_plan_dft_r2c_3d(n0, n1, n2, in_arr, out_slice, LibFFTW::FFTW_ESTIMATE)
-    LibFFTW.fftw_execute(plan)
-    LibFFTW.fftw_destroy_plan(plan)
-
-    out_slice.map do |elem|
-      Complex.new(elem[0], elem[1])
-    end.in_groups_of(n2/2 + 1).in_groups_of(n1)
+    Array.new(n0) do
+      Array.new(n1) do
+        Array.new((n2/2) + 1) do
+          iter.next.as(Complex)
+        end
+      end
+    end
   end
 
   def self.idft_r(x : Array(Array(Array(Complex))), last_dim : Int32)
     n0 = x.size
     n1 = x[0].size
-    n = n0 * n1 * last_dim
-    in_arr = x.flatten.map { |elem| StaticArray[elem.real, elem.imag] }
-    out_slice = Slice(Float64).new(n)
 
-    plan = LibFFTW.fftw_plan_dft_c2r_3d(n0, n1, last_dim, in_arr, out_slice, LibFFTW::FFTW_ESTIMATE)
-    LibFFTW.fftw_execute(plan)
-    LibFFTW.fftw_destroy_plan(plan)
+    iter = DFTCompute(3).idft_r(x.flatten, n0, n1, last_dim).each
 
-    out_slice.map do |elem|
-      elem
-    end.in_groups_of(last_dim).in_groups_of(n1)
+    Array.new(n0) do
+      Array.new(n1) do
+        Array.new(last_dim) do
+          iter.next.as(Float64)
+        end
+      end
+    end
   end
 
   def self.dft(x : RecArrayFloat64)
     n = DimensionsHelper.dimensions(x)
     in_arr = x.flatten
-    sz = in_arr.sz / n[-1] * ((n[-1] / 2) + 1)
+    sz = in_arr.size / n[-1] * ((n[-1] / 2) + 1)
     out_slice = Pointer(LibFFTW::FFTWComplex).malloc(sz).to_slice(sz)
 
     plan = LibFFTW.fftw_plan_dft_r2c(n.size, n, in_arr, out_slice, LibFFTW::FFTW_ESTIMATE)
     LibFFTW.fftw_execute(plan)
-    LibFFTW.ffyw_destroy_plan(plan)
+    LibFFTW.fftw_destroy_plan(plan)
 
     iter = out_slice.map { |elem| Complex.new(elem[0], elem[1]) }.each
     n[-1] = (n[-1] / 2) + 1
@@ -212,16 +188,16 @@ module FFTW
     DimensionsHelper.build_array_by_dimensions(typeof(x), n, 0) { iter.next.as(Complex) }
   end
 
-  def self.idft_r(x : RecArrayFloat64, last_dim : Int32)
+  def self.idft_r(x : RecArrayComplex, last_dim : Int32)
     n = DimensionsHelper.dimensions(x)
     in_arr = x.flatten.map { |elem| StaticArray[elem.real, elem.imag] }
     sz = in_arr.size / n[-1] * last_dim
     n[-1] = last_dim
     out_slice = Slice(Float64).new(sz)
 
-    plan = LibFFTW.fftw_plan_dft_r2c(n.size, n, in_arr, out_slice, LibFFTW::FFTW_ESTIMATE)
+    plan = LibFFTW.fftw_plan_dft_c2r(n.size, n, in_arr, out_slice, LibFFTW::FFTW_ESTIMATE)
     LibFFTW.fftw_execute(plan)
-    LibFFTW.ffyw_destroy_plan(plan)
+    LibFFTW.fftw_destroy_plan(plan)
 
     iter = out_slice.map { |elem| elem }.each
 
@@ -254,7 +230,7 @@ end
 
 private struct DFTCompute(N)
   def self.dft(x : Array(Complex), *dims : Int32)
-    n = x.size
+    n = dims.product { |x| x }
     in_arr = x.map { |elem| StaticArray[elem.real, elem.imag] }
     out_slice = Pointer(FFTW::LibFFTW::FFTWComplex).malloc(n).to_slice(n)
 
@@ -269,7 +245,7 @@ private struct DFTCompute(N)
   end
 
   def self.idft(x : Array(Complex), *dims : Int32)
-    n = x.size
+    n = dims.product { |x| x }
     in_arr = x.map { |elem| StaticArray[elem.real, elem.imag] }
     out_slice = Pointer(FFTW::LibFFTW::FFTWComplex).malloc(n).to_slice(n)
 
@@ -281,5 +257,31 @@ private struct DFTCompute(N)
     out_slice.map do |elem|
       Complex.new(elem[0], elem[1])
     end
+  end
+
+  def self.dft(x : Array(Float), *dims : Int32)
+    n = dims.product { |x| x } / dims.last * ((dims.last / 2) + 1)
+    out_slice = Pointer(FFTW::LibFFTW::FFTWComplex).malloc(n).to_slice(n)
+
+    plan = FFTW::LibFFTW.fftw_plan_dft_r2c(N, pointerof(dims).as(Int32*), x, out_slice, FFTW::LibFFTW::FFTW_ESTIMATE)
+    FFTW::LibFFTW.fftw_execute(plan)
+    FFTW::LibFFTW.fftw_destroy_plan(plan)
+
+    out_slice.map do |elem|
+      Complex.new(elem[0], elem[1])
+    end
+  end
+
+  def self.idft_r(x : Array(Complex), *dims : Int32)
+    n = dims.product { |x| x }
+    in_arr = x.map { |elem| StaticArray[elem.real, elem.imag] }
+    out_slice = Slice(Float64).new(n)
+
+    plan = FFTW::LibFFTW.fftw_plan_dft_c2r(N, pointerof(dims).as(Int32*), in_arr, out_slice, FFTW::LibFFTW::FFTW_ESTIMATE)
+
+    FFTW::LibFFTW.fftw_execute(plan)
+    FFTW::LibFFTW.fftw_destroy_plan(plan)
+
+    out_slice.to_a
   end
 end
