@@ -37,7 +37,7 @@ private class FFTWPlanImpl(N) < FFTW::Plan
 
     @r_slice_in = Slice(Float64).new(n)
     @r_slice_out = Slice(Float64).new(n)
-    @r2c_size = n / dims.last * (dims.last/2 + 1)
+    @r2c_size = n // dims.last * (dims.last//2 + 1)
 
     @dft_c2c_plan = FFTW::LibFFTW.fftw_plan_dft(N, pointerof(dims).as(Int32*), @c_slice_in, @c_slice_out, FFTW::LibFFTW::FFTW_FORWARD, FFTW::LibFFTW::FFTW_MEASURE)
     @idft_c2c_plan = FFTW::LibFFTW.fftw_plan_dft(N, pointerof(dims).as(Int32*), @c_slice_in, @c_slice_out, FFTW::LibFFTW::FFTW_BACKWARD, FFTW::LibFFTW::FFTW_MEASURE)
@@ -46,14 +46,17 @@ private class FFTWPlanImpl(N) < FFTW::Plan
     @idft_c2r_plan = FFTW::LibFFTW.fftw_plan_dft_c2r(N, pointerof(dims).as(Int32*), @c_slice_in, @r_slice_out, FFTW::LibFFTW::FFTW_MEASURE)
   end
 
-  def dft(x : Array(Complex))
+  def dft(x : Array(Complex)) : Array(Complex)
     @c_slice_in.size.times do |i|
       @c_slice_in[i] = StaticArray[x[i].real, x[i].imag]
     end
 
     FFTW::LibFFTW.fftw_execute(@dft_c2c_plan)
 
-    @c_slice_out.map { |elem| Complex.new(elem[0], elem[1]) }
+    Array(Complex).new(@c_slice_out.size) do |i|
+      elem = @c_slice_out[i]
+      Complex.new(elem[0], elem[1])
+    end
   end
 
   def idft(x : Array(Complex))
@@ -66,12 +69,15 @@ private class FFTWPlanImpl(N) < FFTW::Plan
     @c_slice_out.map { |elem| Complex.new(elem[0], elem[1]) }
   end
 
-  def dft(x : Array(Float64))
+  def dft(x : Array(Float64)) : Array(Complex)
     @r_slice_in.copy_from(x.to_unsafe, @r_slice_in.size)
 
     FFTW::LibFFTW.fftw_execute(@dft_r2c_plan)
 
-    @c_slice_out[0, @r2c_size].map { |elem| Complex.new(elem[0], elem[1]) }
+    Array(Complex).new(@r2c_size) do |i|
+      elem = @c_slice_out[i]
+      Complex.new(elem[0], elem[1])
+    end
   end
 
   def idft_r(x : Array(Complex))
