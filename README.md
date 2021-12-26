@@ -1,6 +1,8 @@
 # fftw.cr
 
-[![Build Status](https://travis-ci.org/firejox/fftw.cr.svg?branch=master)](https://travis-ci.org/firejox/fftw.cr)
+[![Linux CI](https://github.com/firejox/fftw.cr/actions/workflows/linux.yml/badge.svg)](https://github.com/firejox/fftw.cr/actions/workflows/linux.yml)
+[![MacOSX CI](https://github.com/firejox/fftw.cr/actions/workflows/macos.yml/badge.svg)](https://github.com/firejox/fftw.cr/actions/workflows/macos.yml)
+[![Windows CI](https://github.com/firejox/fftw.cr/actions/workflows/windows.yml/badge.svg)](https://github.com/firejox/fftw.cr/actions/workflows/windows.yml) 
 
 Crystal wrapper to the [FFTW 3](http://www.fftw.org) library
 
