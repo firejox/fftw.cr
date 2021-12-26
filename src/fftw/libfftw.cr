@@ -1,6 +1,5 @@
 module FFTW
   @[Link("fftw3")]
-  @[Link("m")]
   lib LibFFTW
     alias FFTWComplex = Float64[2]
 
