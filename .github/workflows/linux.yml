@@ -1,0 +1,30 @@
+name: Linux CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  schedule:
+    - cron: '0 6 * * 6'
+jobs:
+  build-ubuntu:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {os: ubuntu-latest, crystal: latest}
+          - {os: ubuntu-latest, crystal: nightly}  
+    runs-on: ${{matrix.os}}
+    steps:
+    - name: Install Crystal
+      uses: crystal-lang/install-crystal@v1.5.3
+      with:
+        crystal: ${{matrix.crystal}}
+    - uses: actions/checkout@v2
+    - name: Install dependencies
+      run: sudo apt-get install -y libfftw3-double3
+    - name: create link to fftw
+      run: sudo ln -s /usr/lib/x86_64-linux-gnu/libfftw3.so.3 /usr/lib/x86_64-linux-gnu/libfftw3.so
+    - name: Run tests
+      run: crystal spec
