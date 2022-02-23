@@ -13,18 +13,18 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Install Crystal
-      uses: crystal-lang/install-crystal@v1.5.3
-      with:
-        shards: false
+      uses: crystal-lang/install-crystal@v1
     - name: Download FFTW
       shell: powershell
       run: Invoke-WebRequest -Uri "https://fftw.org/pub/fftw/fftw-3.3.5-dll64.zip" `
                              -OutFile ./fftw.zip
+    - name: Set up Visual Studio shell
+      uses: egor-tensin/vs-shell@v2
     - name: Unzip FFTW
       shell: cmd
       run: |
         7z x -y fftw.zip
         lib /machine:x64 /def:libfftw3-3.def /out:fftw3.lib
-        move fftw3.lib D:\a\_temp\crystal-nightly-false-undefined\bin\lib
+        move fftw3.lib D:\a\_temp\crystal-nightly-true-undefined\lib
     - name: Run tests
       run: crystal spec
